@@ -1,13 +1,15 @@
 """Shared test fixtures for pytest."""
 
-import pytest
+from collections.abc import AsyncIterator
+
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.database import Base
 
 
-@pytest.fixture
-async def db_session() -> AsyncSession:
+@pytest_asyncio.fixture
+async def db_session() -> AsyncIterator[AsyncSession]:
     """Create an in-memory async database session for testing."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
 
