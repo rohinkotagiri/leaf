@@ -1,0 +1,22 @@
+# Ollama container for local AI inference
+# Bind to localhost only — never expose to the network
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: privatemailai-ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:

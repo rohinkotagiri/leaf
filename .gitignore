@@ -1,0 +1,168 @@
+# =========================
+
+# Environment Variables
+
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+
+# Python
+
+# =========================
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+
+.venv/
+venv/
+env/
+ENV/
+
+# Python Build Artifacts
+
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Testing & Coverage
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+
+.ipynb_checkpoints/
+
+# =========================
+
+# Databases
+
+# =========================
+
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+
+# Application Data
+
+# =========================
+
+data/
+uploads/
+attachments/
+email_cache/
+mail_cache/
+
+# ChromaDB
+
+chroma/
+chroma_db/
+vector_store/
+indexes/
+
+# =========================
+
+# Logs
+
+# =========================
+
+logs/
+*.log
+
+# =========================
+
+# Node.js / React
+
+# =========================
+
+node_modules/
+dist/
+.vite/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+
+# IDE / Editor
+
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+
+# OS Files
+
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+
+# Tauri / Rust
+
+# =========================
+
+src-tauri/target/
+src-tauri/gen/
+target/
+
+# Keep Cargo.lock for applications
+
+# Cargo.lock
+
+# =========================
+
+# Ollama Models
+
+# =========================
+
+models/
+*.gguf
+
+# =========================
+
+# Secrets & Credentials
+
+# =========================
+
+secrets/
+credentials.json
+oauth_token.json
+gmail_token.json
+outlook_token.json
+
+# =========================
+
+# Generated Files
+
+# =========================
+
+reports/
+exports/
+tmp/
+temp/
+
+*.tmp
+*.bak
+*.swp
