@@ -28,6 +28,7 @@ class PromptRegistry:
     SUMMARIZE_V1 = "summarize_v1"
     EXTRACT_V1 = "extract_v1"
     SPAM_V1 = "spam_v1"
+    PARSE_QUERY_V1 = "parse_query_v1"
 
     prompts: dict[str, PromptTemplate] = {
         CLASSIFY_V1: PromptTemplate(
@@ -97,6 +98,29 @@ class PromptRegistry:
                 "Body:\n{body}\n\n"
                 "Return JSON with keys: spam_score, is_phishing, reasons, confidence. "
                 "Scores must be 0.0 to 1.0."
+            ),
+        ),
+        PARSE_QUERY_V1: PromptTemplate(
+            name=PARSE_QUERY_V1,
+            version=PARSE_QUERY_V1,
+            system=(
+                "You are a structured search query parser. Your job is to extract search filters "
+                "and keywords from a natural language query. Return valid JSON only and do not "
+                "include commentary."
+            ),
+            user_template=(
+                "Analyze the following natural language search query and extract search filters and keywords.\n"
+                "Current Local Time: {current_time}\n\n"
+                "Extract the following keys in JSON format:\n"
+                "- \"keywords\": A list of search term strings (exclude terms used for structural filters like dates or folders).\n"
+                "- \"date_from\": The starting date filter in YYYY-MM-DD format (resolve relative ranges like 'last 3 months', 'yesterday', 'last week' relative to Current Local Time). Use null if no start date is specified.\n"
+                "- \"date_to\": The ending date filter in YYYY-MM-DD format. Use null if no end date is specified.\n"
+                "- \"sender_filter\": A string of a sender's name or email to filter by. Use null if none.\n"
+                "- \"category_filter\": The name of the category to filter by (one of: work, personal, finance, travel, shopping, newsletter, notification, security, spam, other). Use null if none.\n"
+                "- \"has_attachments\": A boolean indicating if the query asks for emails with attachments. Use null if not specified.\n"
+                "- \"is_unread\": A boolean indicating if the query asks for unread/read status. Use null if not specified.\n\n"
+                "Query: \"{query}\"\n\n"
+                "Return JSON only. Do not wrap in markdown or add notes."
             ),
         ),
     }
