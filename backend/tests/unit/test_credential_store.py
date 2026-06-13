@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from app.services.imap.credential_store import AccountCredentialStore, SERVICE_NAME
+from app.services.imap.credential_store import SERVICE_NAME, AccountCredentialStore
 
 
 class TestAccountCredentialStore:

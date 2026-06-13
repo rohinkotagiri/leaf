@@ -1,0 +1,10 @@
+From: bob@example.com
+To: alice@example.com
+Subject: Re: Thread Test
+Date: Thu, 18 Jan 2024 12:00:00 +0000
+Message-ID: <reply001@example.com>
+In-Reply-To: <original001@example.com>
+References: <original001@example.com> <reply000@example.com>
+Content-Type: text/plain
+
+Reply body.

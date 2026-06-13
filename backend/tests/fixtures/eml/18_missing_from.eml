@@ -1,0 +1,7 @@
+To: receiver@example.com
+Subject: No From
+Date: Tue, 16 Jan 2024 10:00:00 +0000
+Message-ID: <msg018@example.com>
+Content-Type: text/plain
+
+Who sent this?

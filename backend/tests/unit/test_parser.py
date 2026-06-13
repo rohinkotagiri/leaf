@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC
 
 from app.services.imap.parser import EmailParser
 
@@ -228,15 +228,15 @@ class TestEmailParser:
     def test_parse_utf8_sender_name(self) -> None:
         """Parse email with international characters in sender name."""
         raw = (
-            "From: =?UTF-8?B?5bGx55Sw5aSq6YOO?= <yamada@example.jp>\r\n"
-            "To: receiver@example.com\r\n"
-            "Subject: Test\r\n"
-            "Date: Tue, 09 Jan 2024 12:00:00 +0900\r\n"
-            "Message-ID: <msg010@example.com>\r\n"
-            "Content-Type: text/plain\r\n"
-            "\r\n"
-            "Body.\r\n"
-        ).encode("utf-8")
+            b"From: =?UTF-8?B?5bGx55Sw5aSq6YOO?= <yamada@example.jp>\r\n"
+            b"To: receiver@example.com\r\n"
+            b"Subject: Test\r\n"
+            b"Date: Tue, 09 Jan 2024 12:00:00 +0900\r\n"
+            b"Message-ID: <msg010@example.com>\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"\r\n"
+            b"Body.\r\n"
+        )
 
         result = self.parser.parse(raw, self.account_id, uid=10)
         assert result.sender_email == "yamada@example.jp"
@@ -260,7 +260,7 @@ class TestEmailParser:
 
         result = self.parser.parse(raw, self.account_id, uid=11)
         assert result.date is not None
-        assert result.date.tzinfo == timezone.utc
+        assert result.date.tzinfo == UTC
         # 15:00 IST (+05:30) = 09:30 UTC
         assert result.date.hour == 9
         assert result.date.minute == 30
@@ -280,7 +280,7 @@ class TestEmailParser:
 
         result = self.parser.parse(raw, self.account_id, uid=12)
         assert result.date is not None
-        assert result.date.tzinfo == timezone.utc
+        assert result.date.tzinfo == UTC
 
     def test_parse_malformed_date(self) -> None:
         """Malformed date should return None, not crash."""
@@ -539,3 +539,159 @@ class TestEmailParser:
         assert "Nested plain text" in result.body_text
         assert len(result.attachments) == 1
         assert result.attachments[0].filename == "image.png"
+
+    # ── RFC 2047 _decode_header edge cases ────────────────────────────
+
+    def test_decode_header_direct_rfc2047(self) -> None:
+        """Directly test _decode_header with an encoded string."""
+        result = self.parser._decode_header("=?UTF-8?B?44GT44KT44Gr44Gh44Gv?=")
+        assert "=?" not in result
+        assert result  # Should be decoded Japanese
+
+    def test_decode_header_invalid_charset(self) -> None:
+        """_decode_header should fallback to utf-8 on unknown charset."""
+        result = self.parser._decode_header("=?FAKE-CHARSET?Q?Hello?=")
+        assert result  # Should not crash
+
+    def test_decode_header_exception_fallback(self) -> None:
+        """_decode_header should return raw string on total failure."""
+        # A badly malformed encoded word
+        result = self.parser._decode_header("=?=?=?broken=?=?=")
+        assert result  # Returns raw stripped string
+
+    def test_decode_header_empty(self) -> None:
+        """_decode_header with empty string returns empty."""
+        assert self.parser._decode_header("") == ""
+
+    def test_decode_header_plain_text(self) -> None:
+        """_decode_header with plain text just strips whitespace."""
+        assert self.parser._decode_header("  Hello World  ") == "Hello World"
+
+    # ── Signature stripping with stripped trailing space ───────────────
+
+    def test_strip_signature_no_trailing_space(self) -> None:
+        """Signature with '--' (no trailing space) should still be stripped."""
+        raw = (
+            b"From: sender@example.com\r\n"
+            b"To: receiver@example.com\r\n"
+            b"Subject: Sig Test\r\n"
+            b"Date: Sat, 13 Jan 2024 11:00:00 +0000\r\n"
+            b"Message-ID: <msg040@example.com>\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"\r\n"
+            b"Main content here.\r\n"
+            b"\r\n"
+            b"--\r\n"
+            b"John Doe\r\n"
+            b"Senior Developer\r\n"
+        )
+
+        result = self.parser.parse(raw, self.account_id, uid=40)
+        assert "Main content here" in result.body_text
+        assert "Senior Developer" not in result.body_text
+
+    # ── Multiple attachments ──────────────────────────────────────────
+
+    def test_parse_multiple_attachments(self) -> None:
+        """Parse email with multiple attachments of different types."""
+        raw = (
+            b"From: sender@example.com\r\n"
+            b"To: receiver@example.com\r\n"
+            b"Subject: Multi Attach\r\n"
+            b"Date: Mon, 22 Jan 2024 10:00:00 +0000\r\n"
+            b"Message-ID: <msg041@example.com>\r\n"
+            b"MIME-Version: 1.0\r\n"
+            b'Content-Type: multipart/mixed; boundary="mixbound"\r\n'
+            b"\r\n"
+            b"--mixbound\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"\r\n"
+            b"See attached files.\r\n"
+            b"--mixbound\r\n"
+            b"Content-Type: application/pdf\r\n"
+            b'Content-Disposition: attachment; filename="doc.pdf"\r\n'
+            b"Content-Transfer-Encoding: base64\r\n"
+            b"\r\n"
+            b"JVBERi0=\r\n"
+            b"--mixbound\r\n"
+            b"Content-Type: image/jpeg\r\n"
+            b'Content-Disposition: attachment; filename="photo.jpg"\r\n'
+            b"Content-Transfer-Encoding: base64\r\n"
+            b"\r\n"
+            b"/9j/4AAQ\r\n"
+            b"--mixbound--\r\n"
+        )
+
+        result = self.parser.parse(raw, self.account_id, uid=41)
+        assert len(result.attachments) == 2
+        filenames = {a.filename for a in result.attachments}
+        assert "doc.pdf" in filenames
+        assert "photo.jpg" in filenames
+
+    # ── Inline image (not counted as attachment body) ─────────────────
+
+    def test_parse_inline_image_skipped_as_body(self) -> None:
+        """Inline images without 'attachment' disposition should still be
+        recorded as attachments but not as body content."""
+        raw = (
+            b"From: sender@example.com\r\n"
+            b"To: receiver@example.com\r\n"
+            b"Subject: Inline Image\r\n"
+            b"Date: Tue, 23 Jan 2024 10:00:00 +0000\r\n"
+            b"Message-ID: <msg042@example.com>\r\n"
+            b"MIME-Version: 1.0\r\n"
+            b'Content-Type: multipart/mixed; boundary="mixbound"\r\n'
+            b"\r\n"
+            b"--mixbound\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"\r\n"
+            b"Here is an image.\r\n"
+            b"--mixbound\r\n"
+            b"Content-Type: image/png\r\n"
+            b"Content-Disposition: inline\r\n"
+            b"Content-Transfer-Encoding: base64\r\n"
+            b"\r\n"
+            b"iVBORw0KGgo=\r\n"
+            b"--mixbound--\r\n"
+        )
+
+        result = self.parser.parse(raw, self.account_id, uid=42)
+        assert "Here is an image" in result.body_text
+        assert len(result.attachments) == 1
+
+    # ── Non-multipart without body ────────────────────────────────────
+
+    def test_parse_minimal_email(self) -> None:
+        """Minimal email with almost no content."""
+        raw = (
+            b"From: a@b.com\r\n"
+            b"To: c@d.com\r\n"
+            b"Subject: Min\r\n"
+            b"Date: Wed, 24 Jan 2024 00:00:00 +0000\r\n"
+            b"Message-ID: <min@example.com>\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"\r\n"
+            b"x\r\n"
+        )
+
+        result = self.parser.parse(raw, self.account_id, uid=43)
+        assert result.id
+        assert result.sender_email == "a@b.com"
+        assert result.body_text == "x"
+
+    # ── Date edge case: missing date ──────────────────────────────────
+
+    def test_parse_missing_date_header(self) -> None:
+        """Email with no Date header should have None date."""
+        raw = (
+            b"From: sender@example.com\r\n"
+            b"To: receiver@example.com\r\n"
+            b"Subject: No Date\r\n"
+            b"Message-ID: <nodate@example.com>\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"\r\n"
+            b"Body.\r\n"
+        )
+
+        result = self.parser.parse(raw, self.account_id, uid=44)
+        assert result.date is None

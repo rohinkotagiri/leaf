@@ -1,0 +1,8 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: HTML with scripts
+Date: Wed, 03 Jan 2024 10:00:00 +0000
+Message-ID: <msg004@example.com>
+Content-Type: text/html
+
+<html><head><style>body{color:red}</style></head><body><script>alert('xss')</script><p>Safe content.</p></body></html>

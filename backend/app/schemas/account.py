@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
 
-from app.models.account import AuthType, ProviderType
+from app.models.account import ProviderType
 
 
 class AccountCreate(BaseModel):
@@ -18,7 +18,7 @@ class AccountCreate(BaseModel):
     imap_host: str = ""
     imap_port: int = 993
     use_ssl: bool = True
-    auth_type: AuthType = AuthType.PASSWORD
+    credentials_key: str | None = None
 
 
 class AccountUpdate(BaseModel):
@@ -28,7 +28,8 @@ class AccountUpdate(BaseModel):
     imap_host: str | None = None
     imap_port: int | None = None
     use_ssl: bool | None = None
-    is_active: bool | None = None
+    sync_enabled: bool | None = None
+    credentials_key: str | None = None
 
 
 class AccountResponse(BaseModel):
@@ -41,8 +42,8 @@ class AccountResponse(BaseModel):
     imap_host: str
     imap_port: int
     use_ssl: bool
-    auth_type: AuthType
-    is_active: bool
+    sync_enabled: bool
+    credentials_key: str | None
     last_sync_at: datetime | None
     created_at: datetime
 

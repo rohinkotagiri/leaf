@@ -1,0 +1,8 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: No TZ
+Date: Thu, 11 Jan 2024 08:00:00
+Message-ID: <msg012@example.com>
+Content-Type: text/plain
+
+Body.

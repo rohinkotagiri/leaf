@@ -1,0 +1,7 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Empty Body
+Date: Wed, 17 Jan 2024 11:00:00 +0000
+Message-ID: <msg019@example.com>
+Content-Type: text/plain
+

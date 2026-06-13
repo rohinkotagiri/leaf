@@ -10,12 +10,12 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.config import settings
 from app.database import Base
 
-# Import all models here so Alembic can detect them
-# from app.models.email import Email  # noqa: F401  (uncomment when models exist)
-# from app.models.account import Account  # noqa: F401
-# from app.models.analysis import Analysis  # noqa: F401
-# from app.models.feedback import Feedback  # noqa: F401
-# from app.models.thread import Thread  # noqa: F401
+# Import all models so Alembic can detect them for autogenerate
+from app.models.account import Account  # noqa: F401
+from app.models.analysis import EmailAnalysis  # noqa: F401
+from app.models.email import Email  # noqa: F401
+from app.models.feedback import UserFeedback  # noqa: F401
+from app.models.thread import Thread  # noqa: F401
 
 # Alembic Config object
 config = context.config

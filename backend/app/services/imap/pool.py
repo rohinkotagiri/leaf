@@ -9,8 +9,8 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import defaultdict
-from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
 
 from app.services.imap.client import BaseEmailClient
 
@@ -82,10 +82,8 @@ class ConnectionPool:
                 else:
                     # Stale connection — discard
                     logger.debug("Discarding stale connection for account %s", account_id)
-                    try:
+                    with suppress(Exception):
                         await client.disconnect()
-                    except Exception:
-                        pass
 
             # Check if we can create a new connection
             if self._in_use[account_id] >= self.max_per_account:
@@ -120,10 +118,8 @@ class ConnectionPool:
                 )
             else:
                 logger.debug("Discarding disconnected client for account %s", account_id)
-                try:
+                with suppress(Exception):
                     await client.disconnect()
-                except Exception:
-                    pass
 
     async def close_all(self) -> None:
         """Close all pooled connections. Call on application shutdown."""

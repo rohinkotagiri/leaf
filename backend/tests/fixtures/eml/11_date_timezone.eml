@@ -1,0 +1,8 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Timezone Test
+Date: Wed, 10 Jan 2024 15:00:00 +0530
+Message-ID: <msg011@example.com>
+Content-Type: text/plain
+
+Body.

@@ -62,7 +62,7 @@ class GmailClient(ImapClient):
 
         try:
             # Build XOAUTH2 string per RFC 7628
-            auth_string = self._build_xoauth2_string(self.email_address, access_token)
+            self._build_xoauth2_string(self.email_address, access_token)
             await self._run_sync(client.oauth2_login, self.email_address, access_token)
             logger.info("Gmail OAuth2 authentication successful for %s", self.email_address)
         except Exception as e:

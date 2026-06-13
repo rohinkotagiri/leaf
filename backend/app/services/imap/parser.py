@@ -18,8 +18,9 @@ import email.utils
 import hashlib
 import logging
 import re
-from datetime import datetime, timezone
-from email.message import Message
+from datetime import UTC, datetime
+from email.message import EmailMessage as MIMEEmailMessage
+from typing import cast
 
 import html2text
 from bs4 import BeautifulSoup
@@ -57,7 +58,7 @@ class EmailParser:
         Returns:
             Parsed EmailMessage with all fields populated.
         """
-        msg = email.message_from_bytes(raw_bytes, policy=email.policy.default)
+        msg = cast(MIMEEmailMessage, email.message_from_bytes(raw_bytes, policy=email.policy.default))
 
         message_id = msg.get("Message-ID", "") or ""
         message_id = message_id.strip()
@@ -106,7 +107,7 @@ class EmailParser:
 
         return parsed
 
-    def _extract_body(self, msg: Message) -> tuple[str, str]:
+    def _extract_body(self, msg: MIMEEmailMessage) -> tuple[str, str]:
         """Extract text and HTML body from a MIME message.
 
         Preference order:
@@ -177,7 +178,7 @@ class EmailParser:
             logger.warning("Failed to convert HTML to text, falling back to raw strip")
             return BeautifulSoup(html, "html.parser").get_text(separator="\n").strip()
 
-    def _parse_sender(self, msg: Message) -> tuple[str, str]:
+    def _parse_sender(self, msg: MIMEEmailMessage) -> tuple[str, str]:
         """Extract sender name and email from the From header."""
         from_header = msg.get("From", "") or ""
         from_header = self._decode_header(from_header)
@@ -189,7 +190,7 @@ class EmailParser:
         name, addr = email.utils.parseaddr(from_header)
         return name.strip(), addr.strip().lower()
 
-    def _extract_recipients(self, msg: Message) -> list[Recipient]:
+    def _extract_recipients(self, msg: MIMEEmailMessage) -> list[Recipient]:
         """Extract all recipients (To, Cc, Bcc) from headers."""
         recipients: list[Recipient] = []
 
@@ -264,16 +265,13 @@ class EmailParser:
         try:
             dt = email.utils.parsedate_to_datetime(date_str)
             # Normalize to UTC
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            else:
-                dt = dt.astimezone(timezone.utc)
+            dt = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
             return dt
         except Exception:
             logger.warning("Failed to parse date: %s", date_str[:50])
             return None
 
-    def _extract_attachments(self, msg: Message) -> list[Attachment]:
+    def _extract_attachments(self, msg: MIMEEmailMessage) -> list[Attachment]:
         """Extract attachment metadata (filename, type, size) without content."""
         attachments: list[Attachment] = []
 
@@ -308,7 +306,7 @@ class EmailParser:
 
         return attachments
 
-    def _extract_raw_headers(self, msg: Message) -> dict[str, str]:
+    def _extract_raw_headers(self, msg: MIMEEmailMessage) -> dict[str, str]:
         """Extract a subset of useful raw headers as a dict."""
         useful_headers = [
             "From",
@@ -354,6 +352,9 @@ class EmailParser:
         """
         if not text:
             return ""
+
+        # Normalize CRLF → LF before any pattern matching
+        text = text.replace("\r\n", "\n")
 
         text = self._strip_reply_chains(text)
         text = self._strip_signature(text)
@@ -409,11 +410,22 @@ class EmailParser:
         return "\n".join(result)
 
     def _strip_signature(self, text: str) -> str:
-        """Remove email signature after the conventional '-- ' delimiter."""
-        # The standard signature delimiter is "-- " (dash-dash-space)
+        """Remove email signature after the conventional '-- ' delimiter.
+
+        Handles both '-- ' (standard) and '--' (trailing space stripped by
+        email.policy.default during parsing).
+        """
+        # Try the standard delimiter first: "-- " (dash-dash-space)
         parts = text.split("\n-- \n", 1)
         if len(parts) > 1:
             return parts[0]
+
+        # Fallback: email.policy.default often strips trailing whitespace,
+        # turning "-- " into "--"
+        parts = text.split("\n--\n", 1)
+        if len(parts) > 1:
+            return parts[0]
+
         return text
 
     @staticmethod

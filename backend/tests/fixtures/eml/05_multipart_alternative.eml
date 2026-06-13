@@ -1,0 +1,17 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Multipart Alternative
+Date: Thu, 04 Jan 2024 08:30:00 +0000
+Message-ID: <msg005@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="boundary123"
+
+--boundary123
+Content-Type: text/plain; charset=utf-8
+
+Plain text version of the email.
+--boundary123
+Content-Type: text/html; charset=utf-8
+
+<html><body><p>HTML version of the email.</p></body></html>
+--boundary123--

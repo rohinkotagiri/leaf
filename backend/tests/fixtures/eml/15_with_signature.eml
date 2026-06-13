@@ -1,0 +1,13 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: With Signature
+Date: Sat, 13 Jan 2024 11:00:00 +0000
+Message-ID: <msg015@example.com>
+Content-Type: text/plain
+
+Main message body.
+
+-- 
+John Doe
+Senior Developer
+john@example.com

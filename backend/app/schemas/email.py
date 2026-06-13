@@ -8,7 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class RecipientType(str, enum.Enum):
+class RecipientType(enum.StrEnum):
     """Type of email recipient."""
 
     TO = "to"

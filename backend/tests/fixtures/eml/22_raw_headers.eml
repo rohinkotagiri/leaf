@@ -1,0 +1,10 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Headers Test
+Date: Sun, 21 Jan 2024 15:00:00 +0000
+Message-ID: <msg022@example.com>
+X-Mailer: TestMailer/1.0
+Reply-To: replyto@example.com
+Content-Type: text/plain
+
+Body.

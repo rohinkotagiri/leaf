@@ -1,0 +1,19 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: With Attachment
+Date: Fri, 05 Jan 2024 14:00:00 +0000
+Message-ID: <msg006@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="mixbound"
+
+--mixbound
+Content-Type: text/plain
+
+See attached file.
+--mixbound
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="report.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKMSAwIG9iago=
+--mixbound--

@@ -1,0 +1,8 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Bad Date
+Date: not-a-real-date
+Message-ID: <msg013@example.com>
+Content-Type: text/plain
+
+Body.

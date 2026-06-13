@@ -1,0 +1,8 @@
+From: alice@example.com
+To: bob@example.com
+Subject: No Name
+Date: Mon, 01 Jan 2024 12:00:00 +0000
+Message-ID: <msg002@example.com>
+Content-Type: text/plain
+
+Body text.

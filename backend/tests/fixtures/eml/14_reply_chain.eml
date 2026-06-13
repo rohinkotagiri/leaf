@@ -1,0 +1,13 @@
+From: bob@example.com
+To: alice@example.com
+Subject: Re: Hello
+Date: Fri, 12 Jan 2024 10:00:00 +0000
+Message-ID: <msg014@example.com>
+In-Reply-To: <msg001@example.com>
+Content-Type: text/plain
+
+Thanks Alice!
+
+On Mon, Jan 1, 2024 at 12:00 PM Alice <alice@example.com> wrote:
+> Hello Bob,
+> This is a plain text email.

@@ -1,0 +1,9 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Base64 Body
+Date: Wed, 24 Jan 2024 09:00:00 +0000
+Message-ID: <msg025@example.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+SGVsbG8gZnJvbSBiYXNlNjQh

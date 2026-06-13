@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -156,7 +156,7 @@ class TestImapClient:
         mock_imap_class.return_value = mock_imap
 
         await self.client.connect()
-        since = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        since = datetime(2024, 1, 1, tzinfo=UTC)
         await self.client.fetch_emails(folder="INBOX", limit=10, since=since)
 
         # Verify search was called with SINCE criteria

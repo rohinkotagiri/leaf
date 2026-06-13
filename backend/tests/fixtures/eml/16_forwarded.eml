@@ -1,0 +1,15 @@
+From: forwarder@example.com
+To: receiver@example.com
+Subject: Fwd: Original Subject
+Date: Sun, 14 Jan 2024 14:00:00 +0000
+Message-ID: <msg016@example.com>
+Content-Type: text/plain
+
+Check out this email:
+
+---------- Forwarded message ----------
+From: original@example.com
+Date: Sat, 13 Jan 2024 10:00:00 +0000
+Subject: Original Subject
+
+Original content here.
