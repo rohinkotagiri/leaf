@@ -135,6 +135,7 @@ def email_to_detail_response(email: Email, analysis: EmailAnalysis | None) -> Em
 @router.get("", response_model=dict[str, Any], status_code=status.HTTP_200_OK)
 async def list_emails(
     account_id: str | None = None,
+    folder: str | None = None,
     category: str | None = None,
     is_read: bool | None = None,
     priority_min: float | None = None,
@@ -152,6 +153,8 @@ async def list_emails(
     # Apply filters
     if account_id:
         stmt = stmt.where(Email.account_id == account_id)
+    if folder:
+        stmt = stmt.where(Email.folder.ilike(folder))
     if is_read is not None:
         stmt = stmt.where(Email.is_read == is_read)
     if date_from:
