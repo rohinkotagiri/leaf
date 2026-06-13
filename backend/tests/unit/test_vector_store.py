@@ -1,6 +1,7 @@
 """Unit tests for ChromaDBStore wrapper."""
 
 import pytest
+
 from app.services.storage.vector_store import ChromaDBStore
 
 

@@ -5,20 +5,21 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
+
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.schemas.analysis import ActionItem, AnalysisCreate, ExtractedDate
 from app.schemas.email import EmailMessage
-from app.schemas.analysis import AnalysisCreate, ActionItem, ExtractedDate
-from app.services.storage.storage_service import StorageService
-from app.services.storage.email_repo import EmailRepository
-from app.services.storage.analysis_repo import AnalysisRepository
-from app.services.ai.embedding import EmbeddingService
 from app.services.ai.classification import ClassificationService
-from app.services.ai.summarization import SummarizationService
+from app.services.ai.embedding import EmbeddingService
 from app.services.ai.extraction import ExtractionService
+from app.services.ai.summarization import SummarizationService
 from app.services.priority import PriorityScorer
+from app.services.storage.analysis_repo import AnalysisRepository
+from app.services.storage.email_repo import EmailRepository
+from app.services.storage.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -63,14 +64,14 @@ class IngestionPipeline:
     async def ingest_email(self, session: AsyncSession, raw_email: EmailMessage) -> PipelineResult:
         """Process a parsed email message: deduplicate, save metadata, generate embeddings, and queue for AI."""
         start_time = time.perf_counter()
-        
+
         result = PipelineResult(
             email_id=raw_email.id,
             model_versions={
                 "embed_model": self.embedding_service.model
             }
         )
-        
+
         # Stage 1: Parse & Deduplicate
         try:
             existing = await self.storage_service.email_repo.get_by_id(session, raw_email.id)
@@ -103,7 +104,7 @@ class IngestionPipeline:
                 # Combine subject and body text to generate richer embedding context
                 embed_text = f"Subject: {raw_email.subject}\nBody: {raw_email.body_text}"
                 embedding = await self.embedding_service.embed_text(embed_text)
-                
+
                 if self.storage_service.vector_store is not None:
                     metadata = self.storage_service._build_vector_metadata(raw_email)
                     await self.storage_service.vector_store.add_embedding(
@@ -156,10 +157,10 @@ class AnalysisPipeline:
     async def analyze_email(self, session: AsyncSession, email_id: str) -> AnalysisResult:
         """Run two-pass classification & analysis. Applies spam filter and enriches non-spam."""
         start_time = time.perf_counter()
-        
+
         stages_completed = []
         errors = {}
-        
+
         # 1. Fetch Email
         email = await self.email_repo.get_by_id(session, email_id)
         if not email:
@@ -171,7 +172,7 @@ class AnalysisPipeline:
                 errors={"fetch": "Email not found in database"},
                 duration_ms=duration
             )
-            
+
         # 2. Fast pass: Classification (Llama 3.2 3B)
         try:
             class_res = await self.classification_service.classify_email(
@@ -216,7 +217,7 @@ class AnalysisPipeline:
                 await self.analysis_repo.save_analysis(session, analysis_data)
                 await self.email_repo.mark_analyzed(session, email_id)
                 stages_completed.append("spam_gate")
-                
+
                 # Emit WebSocket Event
                 try:
                     from app.services.websocket import manager
@@ -225,7 +226,7 @@ class AnalysisPipeline:
                 except Exception as e:
                     logger.warning("WebSocket emit failed for email %s", email_id, exc_info=True)
                     errors["websocket"] = str(e)
-                
+
                 duration = (time.perf_counter() - start_time) * 1000.0
                 return AnalysisResult(
                     email_id=email_id,
@@ -255,7 +256,7 @@ class AnalysisPipeline:
         action_items = []
         extracted_dates = []
         extracted_entities = {}
-        
+
         # Summarize
         try:
             summary = await self.summarization_service.summarize_email(
@@ -267,7 +268,7 @@ class AnalysisPipeline:
         except Exception as e:
             logger.warning("Summarization failed for email %s", email_id, exc_info=True)
             errors["summarization"] = str(e)
-            
+
         # Extract
         try:
             extract_res = await self.extraction_service.extract_email(
@@ -283,7 +284,7 @@ class AnalysisPipeline:
                     priority=item.priority
                 ) for item in extract_res.action_items
             ]
-            
+
             # Gather extracted dates
             for appt in extract_res.appointments:
                 if appt.date:
@@ -294,14 +295,14 @@ class AnalysisPipeline:
             for item in extract_res.action_items:
                 if item.deadline:
                     extracted_dates.append(ExtractedDate(date=item.deadline, context=f"Action Item: {item.task}"))
-            
+
             # Gather entities
             extracted_entities = {
                 "people": extract_res.entities.people,
                 "organizations": extract_res.entities.organizations,
                 "monetary_amounts": extract_res.entities.monetary_amounts,
             }
-            
+
             stages_completed.append("extraction")
         except Exception as e:
             logger.warning("Extraction failed for email %s", email_id, exc_info=True)
@@ -363,9 +364,9 @@ class AnalysisPipeline:
                 if thread_emails and all(e.is_analyzed for e in thread_emails):
                     # Convert ORM Emails to DTO EmailMessages
                     dto_messages = [self.email_repo.email_to_message(e) for e in thread_emails]
-                    
+
                     thread_summary = await self.summarization_service.summarize_thread(dto_messages)
-                    
+
                     from app.models.thread import Thread
                     thread = await session.get(Thread, email.thread_id)
                     if thread:

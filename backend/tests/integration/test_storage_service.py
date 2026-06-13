@@ -1,11 +1,12 @@
 """Integration tests for StorageService coordinating SQL and Vector Store."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.account import Account, ProviderType
-from app.schemas.email import Attachment, EmailMessage, Recipient, RecipientType
+from app.schemas.email import EmailMessage, Recipient, RecipientType
 from app.services.storage.email_repo import EmailRepository
 from app.services.storage.storage_service import StorageService
 from app.services.storage.vector_store import ChromaDBStore

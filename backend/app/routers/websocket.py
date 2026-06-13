@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from app.services.websocket import manager
 
 logger = logging.getLogger(__name__)

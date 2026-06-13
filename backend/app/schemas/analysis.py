@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ActionItem(BaseModel):
@@ -59,6 +61,10 @@ class AnalysisUpdate(BaseModel):
     confidence: float | None = None
 
 
+
+
+
+
 class AnalysisResponse(BaseModel):
     """API response for an email analysis."""
 
@@ -80,3 +86,33 @@ class AnalysisResponse(BaseModel):
     analyzed_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @field_validator("action_items", mode="before")
+    @classmethod
+    def parse_action_items(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v
+
+    @field_validator("extracted_dates", mode="before")
+    @classmethod
+    def parse_extracted_dates(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v
+
+    @field_validator("extracted_entities", mode="before")
+    @classmethod
+    def parse_extracted_entities(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return {}
+        return v

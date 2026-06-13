@@ -6,7 +6,8 @@ import asyncio
 import logging
 import time
 from typing import Any
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 
 from app.database import async_session_factory
 from app.models.email import Email
@@ -48,17 +49,17 @@ class BackfillStatus:
                 "elapsed_seconds": 0.0,
                 "eta_seconds": 0.0,
             }
-        
+
         elapsed = time.perf_counter() - self.start_time if self.start_time else 0.0
         processed = self.completed + self.failed
-        
+
         if processed > 0:
             rate = processed / elapsed
             remaining = self.total - processed
             eta = remaining / rate if rate > 0 else 0.0
         else:
             eta = 0.0
-            
+
         return {
             "is_running": True,
             "total": self.total,
@@ -91,7 +92,7 @@ class BackfillWorker:
                 stmt = select(func.count(Email.id)).where(Email.is_analyzed == False)  # noqa: E712
                 res = await session.execute(stmt)
                 total_unanalyzed = res.scalar() or 0
-                
+
                 if total_unanalyzed == 0:
                     logger.info("No unanalyzed emails found. Backfill unnecessary.")
                     return

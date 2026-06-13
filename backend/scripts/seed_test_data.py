@@ -4,24 +4,21 @@ Generates ~200 mock emails, conversation threads, and AI analysis records.
 """
 
 import asyncio
+import logging
 import random
 import uuid
-from datetime import datetime, timedelta, UTC
-import logging
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import Base, engine, async_session_factory
+from app.database import Base, async_session_factory, engine
 from app.models.account import Account, ProviderType
-from app.models.email import Email
 from app.models.thread import Thread
+from app.schemas.analysis import ActionItem, AnalysisCreate, ExtractedDate
+from app.schemas.email import Attachment, EmailMessage, Recipient, RecipientType
 from app.services.storage.account_repo import AccountRepository
-from app.services.storage.email_repo import EmailRepository
 from app.services.storage.analysis_repo import AnalysisRepository
-from app.services.storage.vector_store import ChromaDBStore
+from app.services.storage.email_repo import EmailRepository
 from app.services.storage.storage_service import StorageService
-from app.schemas.email import EmailMessage, Recipient, RecipientType, Attachment
-from app.schemas.analysis import AnalysisCreate, ActionItem, ExtractedDate
+from app.services.storage.vector_store import ChromaDBStore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("seed")

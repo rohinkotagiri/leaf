@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import async_session_factory
 from app.models.account import Account, ProviderType
-from app.services.imap import create_email_client, AccountCredentialStore
-from app.services.pipeline import IngestionPipeline, AnalysisPipeline
+from app.services.imap import AccountCredentialStore, create_email_client
+from app.services.pipeline import AnalysisPipeline, IngestionPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class SyncWorker:
 
                     if not since_date:
                         # Default to 30 days ago
-                        since_date = datetime.now(timezone.utc) - timedelta(days=30)
+                        since_date = datetime.now(UTC) - timedelta(days=30)
 
                     # Fetch emails
                     logger.info("Fetching new emails since %s for account %s", since_date.isoformat(), account.email_address)
@@ -98,7 +98,7 @@ class SyncWorker:
                     for email_msg in new_emails:
                         # Run ingestion (dedup, sql save, chroma write, analysis enqueue)
                         ingest_res = await self.ingestion_pipeline.ingest_email(session, email_msg)
-                        
+
                         # Commit the ingestion transaction before analysis starts
                         await session.commit()
 
@@ -118,9 +118,9 @@ class SyncWorker:
 
                     # Update cursor and last sync time
                     # We set the cursor to 1 second ago to avoid clock drift issues
-                    next_cursor = (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()
+                    next_cursor = (datetime.now(UTC) - timedelta(seconds=1)).isoformat()
                     account.sync_cursor = next_cursor
-                    account.last_sync_at = datetime.now(timezone.utc)
+                    account.last_sync_at = datetime.now(UTC)
                     await session.commit()
                     logger.info("Completed sync for account %s. Cursor updated to %s.", account.email_address, next_cursor)
 
@@ -162,7 +162,7 @@ class SyncWorker:
     async def _run_idle_loop(self, account_id: str) -> None:
         """Internal background loop managing connection reconnects and checking for IDLE updates."""
         retry_delay = 5.0
-        
+
         while True:
             try:
                 async with async_session_factory() as session:
@@ -197,19 +197,19 @@ class SyncWorker:
                         # We use 29s timeout as standard IMAP IDLE protocol requires refreshing every 29 mins,
                         # but check frequently to keep socket alive and respond to new mails.
                         responses = await client.idle_check(timeout=30)
-                        
+
                         # If we have any response (meaning event happened like EXISTS, FETCH, etc.)
                         # Or if we just want to run periodic check
                         if responses:
                             logger.info("IDLE notification received for %s: %s", email_address, responses)
                             await client.idle_done()
-                            
+
                             # Perform full sync to fetch new messages
                             await self.sync_account(account_id)
-                            
+
                             # Restart IDLE
                             await client.idle_start()
-                            
+
                 finally:
                     # Clean cleanup
                     try:

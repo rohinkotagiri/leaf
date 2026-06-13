@@ -1,6 +1,7 @@
 """Unit tests for AnalysisRepository using in-memory SQLite."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 

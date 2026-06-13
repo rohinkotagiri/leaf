@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
-from datetime import datetime, timezone
-from sqlalchemy import select, func
+from datetime import UTC, datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.email import Email
 from app.models.account import Account
+from app.models.email import Email
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +47,9 @@ class PriorityScorer:
         logger.debug("Base AI priority score for email %s: %.2f", email.id[:12], score)
 
         # Reference time for deadline/decay calculations
-        ref_time = reference_time or datetime.now(timezone.utc)
+        ref_time = reference_time or datetime.now(UTC)
         if ref_time.tzinfo is None:
-            ref_time = ref_time.replace(tzinfo=timezone.utc)
+            ref_time = ref_time.replace(tzinfo=UTC)
 
         # 1. Boost: sender is in contacts or has replied before (+2)
         has_replied = False
@@ -97,7 +97,7 @@ class PriorityScorer:
                     # Parse ISO format or fallback
                     deadline_dt = datetime.fromisoformat(date_str)
                     if deadline_dt.tzinfo is None:
-                        deadline_dt = deadline_dt.replace(tzinfo=timezone.utc)
+                        deadline_dt = deadline_dt.replace(tzinfo=UTC)
 
                     # Check if the deadline is within the next 48 hours (172800 seconds)
                     diff_seconds = (deadline_dt - ref_time).total_seconds()
@@ -128,7 +128,7 @@ class PriorityScorer:
         email_date = email.date
         if email_date:
             if email_date.tzinfo is None:
-                email_date = email_date.replace(tzinfo=timezone.utc)
+                email_date = email_date.replace(tzinfo=UTC)
 
             age_seconds = (ref_time - email_date).total_seconds()
             age_days = int(age_seconds / 86400)

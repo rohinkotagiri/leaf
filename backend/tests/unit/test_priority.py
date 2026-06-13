@@ -1,12 +1,13 @@
 """Unit tests for the PriorityScorer."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import AsyncMock, MagicMock
 
-from app.models.email import Email
 from app.models.account import Account
+from app.models.email import Email
 from app.services.priority import PriorityScorer
 
 
@@ -19,7 +20,7 @@ def mock_email() -> Email:
     email.thread_id = "thread_123"
     email.sender_name = "Alice Smith"
     email.sender_email = "alice@example.com"
-    email.date = datetime.now(timezone.utc)
+    email.date = datetime.now(UTC)
     return email
 
 
@@ -46,7 +47,7 @@ async def test_priority_scorer_contact_boost(db_session: AsyncSession, mock_emai
         email_address="user@example.com",
     )
     db_session.add(account)
-    
+
     # Sent email from user to alice
     sent_email = Email(
         id="sent_123",
@@ -74,9 +75,9 @@ async def test_priority_scorer_contact_boost(db_session: AsyncSession, mock_emai
 @pytest.mark.asyncio
 async def test_priority_scorer_deadline_boost(db_session: AsyncSession, mock_email: Email) -> None:
     """Test near-deadline boost (+3) for dates within 48 hours."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     deadline_date = now + timedelta(hours=36)  # 36 hours from now (within 48h)
-    
+
     extracted_dates = [
         {"date": deadline_date.isoformat(), "context": "Submit report"}
     ]
@@ -121,7 +122,7 @@ async def test_priority_scorer_newsletter_penalty(db_session: AsyncSession, mock
 @pytest.mark.asyncio
 async def test_priority_scorer_age_decay(db_session: AsyncSession, mock_email: Email) -> None:
     """Test age decay (-1 per day after 7 days, floor 0)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     # 10 days old email -> age_days = 10 -> age_days > 7 -> decay = 10 - 7 = 3.0
     mock_email.date = now - timedelta(days=10)
 
