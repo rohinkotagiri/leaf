@@ -84,6 +84,9 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: tests that require external services such as Ollama",
+]
 
 [tool.mypy]
 python_version = "3.11"

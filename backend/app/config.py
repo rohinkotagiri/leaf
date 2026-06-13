@@ -6,6 +6,7 @@ No secrets are ever hardcoded.
 
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Project root: two levels up from this file (backend/app/config.py → project root)
@@ -36,6 +37,8 @@ class Settings(BaseSettings):
     OLLAMA_FAST_MODEL: str = "llama3.2:3b"
     OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
     OLLAMA_TIMEOUT: int = 120
+    OLLAMA_FAST_TIMEOUT: int = 30
+    OLLAMA_DEEP_TIMEOUT: int = 120
 
     # ── ChromaDB ─────────────────────────────────────────────────────────
     CHROMA_PERSIST_DIR: str = str(PROJECT_ROOT / "data" / "chroma")
@@ -61,6 +64,18 @@ class Settings(BaseSettings):
 
     # ── Prompt versioning ────────────────────────────────────────────────
     PROMPT_VERSION: str = "v1.0.0"
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug_env(cls, value: object) -> object:
+        """Accept common deployment mode strings when DEBUG is inherited."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"release", "prod", "production"}:
+                return False
+            if normalized in {"debug", "dev", "development"}:
+                return True
+        return value
 
 
 settings = Settings()
