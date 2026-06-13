@@ -143,12 +143,49 @@ status_servers() {
   fi
 }
 
-case "${1:-start}" in
+toggle_servers() {
+  local backend_running=false
+  local frontend_running=false
+
+  # Check if backend is running
+  if [ -f "$BACKEND_PID_FILE" ]; then
+    PID=$(cat "$BACKEND_PID_FILE")
+    if ps -p "$PID" > /dev/null 2>&1; then
+      backend_running=true
+    fi
+  fi
+  if [ "$backend_running" = false ] && check_port 8000; then
+    backend_running=true
+  fi
+
+  # Check if frontend is running
+  if [ -f "$FRONTEND_PID_FILE" ]; then
+    PID=$(cat "$FRONTEND_PID_FILE")
+    if ps -p "$PID" > /dev/null 2>&1; then
+      frontend_running=true
+    fi
+  fi
+  if [ "$frontend_running" = false ] && check_port 5173; then
+    frontend_running=true
+  fi
+
+  # If either is running, stop all. Otherwise, start all.
+  if [ "$backend_running" = true ] || [ "$frontend_running" = true ]; then
+    stop_servers
+  else
+    start_servers
+  fi
+}
+
+case "${1:-toggle}" in
   start)
     start_servers
     ;;
   stop)
     stop_servers
+    ;;
+  toggle)
+    toggle_servers
     ;;
   status)
     status_servers
@@ -159,7 +196,7 @@ case "${1:-start}" in
     start_servers
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|toggle|restart|status}"
     exit 1
     ;;
 esac
