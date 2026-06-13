@@ -32,6 +32,7 @@ class Thread(Base):
         String(500), nullable=False, default=""
     )
     participants_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     message_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_activity: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

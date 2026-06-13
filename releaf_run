@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+
+# Paths relative to the script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+BACKEND_DIR="$SCRIPT_DIR/backend"
+FRONTEND_DIR="$SCRIPT_DIR/frontend"
+
+BACKEND_PID_FILE="$SCRIPT_DIR/.backend.pid"
+FRONTEND_PID_FILE="$SCRIPT_DIR/.frontend.pid"
+
+check_port() {
+  local port=$1
+  if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null; then
+    return 0 # Port is in use
+  else
+    return 1 # Port is free
+  fi
+}
+
+kill_port() {
+  local port=$1
+  local pids
+  pids=$(lsof -t -i:$port)
+  if [ -n "$pids" ]; then
+    echo "Cleaning up processes on port $port..."
+    for pid in $pids; do
+      kill -15 "$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null
+    done
+  fi
+}
+
+start_servers() {
+  echo "Checking prerequisites..."
+
+  # 1. Check if Ollama is reachable
+  if curl -sf "http://127.0.0.1:11434/api/tags" > /dev/null 2>&1; then
+    echo "✓ Ollama is running"
+  else
+    echo "⚠ Warning: Ollama is not running on http://127.0.0.1:11434"
+    echo "  Make sure Ollama is started if you want to use local AI features."
+  fi
+
+  # 2. Check ports
+  if check_port 8000; then
+    echo "⚠ Warning: Port 8000 is already in use. Cleaning it up..."
+    kill_port 8000
+    sleep 1
+  fi
+  if check_port 5173; then
+    echo "⚠ Warning: Port 5173 is already in use. Cleaning it up..."
+    kill_port 5173
+    sleep 1
+  fi
+
+  # 3. Start Backend
+  echo "Starting Backend server..."
+  cd "$BACKEND_DIR"
+  # Run uvicorn in the background and redirect output to log file
+  .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 > "$SCRIPT_DIR/backend.log" 2>&1 &
+  BACKEND_PID=$!
+  echo $BACKEND_PID > "$BACKEND_PID_FILE"
+  echo "✓ Backend started (logging to backend.log)"
+
+  # 4. Start Frontend
+  echo "Starting Frontend server..."
+  cd "$FRONTEND_DIR"
+  # Run vite in the background and redirect output to log file
+  npm run dev > "$SCRIPT_DIR/frontend.log" 2>&1 &
+  FRONTEND_PID=$!
+  echo $FRONTEND_PID > "$FRONTEND_PID_FILE"
+  echo "✓ Frontend started (logging to frontend.log)"
+
+  echo ""
+  echo "=================================================="
+  echo "PrivateMailAI is running!"
+  echo "Frontend: http://localhost:5173/"
+  echo "Backend API Docs: http://127.0.0.1:8000/docs"
+  echo "=================================================="
+  echo "To stop the servers, run: ./releaf_run stop"
+  echo "=================================================="
+}
+
+stop_servers() {
+  echo "Stopping PrivateMailAI..."
+
+  # Stop Backend
+  if [ -f "$BACKEND_PID_FILE" ]; then
+    PID=$(cat "$BACKEND_PID_FILE")
+    if ps -p "$PID" > /dev/null 2>&1; then
+      echo "Stopping Backend (PID: $PID)..."
+      kill -15 "$PID" 2>/dev/null || kill -9 "$PID" 2>/dev/null
+    fi
+    rm -f "$BACKEND_PID_FILE"
+  fi
+  kill_port 8000
+
+  # Stop Frontend
+  if [ -f "$FRONTEND_PID_FILE" ]; then
+    PID=$(cat "$FRONTEND_PID_FILE")
+    if ps -p "$PID" > /dev/null 2>&1; then
+      echo "Stopping Frontend (PID: $PID)..."
+      kill -15 "$PID" 2>/dev/null || kill -9 "$PID" 2>/dev/null
+    fi
+    rm -f "$FRONTEND_PID_FILE"
+  fi
+  kill_port 5173
+
+  echo "✓ All servers stopped successfully."
+}
+
+status_servers() {
+  local backend_running=false
+  local frontend_running=false
+
+  if [ -f "$BACKEND_PID_FILE" ]; then
+    PID=$(cat "$BACKEND_PID_FILE")
+    if ps -p "$PID" > /dev/null 2>&1; then
+      backend_running=true
+      echo "Backend: Running (PID: $PID)"
+    fi
+  fi
+  if [ "$backend_running" = false ] && check_port 8000; then
+    backend_running=true
+    echo "Backend: Running (Port 8000 in use)"
+  fi
+  if [ "$backend_running" = false ]; then
+    echo "Backend: Stopped"
+  fi
+
+  if [ -f "$FRONTEND_PID_FILE" ]; then
+    PID=$(cat "$FRONTEND_PID_FILE")
+    if ps -p "$PID" > /dev/null 2>&1; then
+      frontend_running=true
+      echo "Frontend: Running (PID: $PID)"
+    fi
+  fi
+  if [ "$frontend_running" = false ] && check_port 5173; then
+    frontend_running=true
+    echo "Frontend: Running (Port 5173 in use)"
+  fi
+  if [ "$frontend_running" = false ]; then
+    echo "Frontend: Stopped"
+  fi
+}
+
+case "${1:-start}" in
+  start)
+    start_servers
+    ;;
+  stop)
+    stop_servers
+    ;;
+  status)
+    status_servers
+    ;;
+  restart)
+    stop_servers
+    sleep 1
+    start_servers
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac

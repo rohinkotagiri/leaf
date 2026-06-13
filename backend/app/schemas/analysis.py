@@ -26,6 +26,7 @@ class AnalysisCreate(BaseModel):
     """Schema for creating a new analysis record."""
 
     email_id: str
+    is_pending: bool = True
     category: str | None = None
     priority_score: float | None = None
     spam_score: float | None = None
@@ -44,6 +45,7 @@ class AnalysisCreate(BaseModel):
 class AnalysisUpdate(BaseModel):
     """Schema for updating an existing analysis."""
 
+    is_pending: bool | None = None
     category: str | None = None
     priority_score: float | None = None
     spam_score: float | None = None
@@ -61,6 +63,7 @@ class AnalysisResponse(BaseModel):
     """API response for an email analysis."""
 
     email_id: str
+    is_pending: bool
     category: str | None
     priority_score: float | None
     spam_score: float | None

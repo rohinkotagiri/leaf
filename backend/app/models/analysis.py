@@ -28,6 +28,7 @@ class EmailAnalysis(Base):
         ForeignKey("emails.id", ondelete="CASCADE"),
         primary_key=True,
     )
+    is_pending: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
     priority_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     spam_score: Mapped[float | None] = mapped_column(Float, nullable=True)

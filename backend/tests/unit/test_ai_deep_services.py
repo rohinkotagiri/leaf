@@ -34,7 +34,7 @@ async def test_summarize_thread_orders_messages_chronologically() -> None:
 
     prompt = client.chat_calls[0]["messages"][1]["content"]
     assert summary == "Thread summary."
-    assert prompt.index("Subject: Earlier") < prompt.index("Subject: Later")
+    assert prompt.index("Body: First message") < prompt.index("Body: Second message")
 
 
 @pytest.mark.asyncio

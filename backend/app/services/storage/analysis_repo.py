@@ -28,6 +28,7 @@ class AnalysisRepository:
 
         if existing is not None:
             # Update existing
+            existing.is_pending = data.is_pending
             existing.category = data.category
             existing.priority_score = data.priority_score
             existing.spam_score = data.spam_score
@@ -51,6 +52,7 @@ class AnalysisRepository:
 
         analysis = EmailAnalysis(
             email_id=data.email_id,
+            is_pending=data.is_pending,
             category=data.category,
             priority_score=data.priority_score,
             spam_score=data.spam_score,
