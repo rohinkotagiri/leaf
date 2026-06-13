@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { useEmailStore } from '../../stores/useEmailStore';
-import { RefreshCw, Radio, CheckCircle, Database } from 'lucide-react';
+import { RefreshCw, CheckCircle, Database } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SyncStatusBarProps {
@@ -23,7 +23,7 @@ export function SyncStatusBar({ wsConnected }: SyncStatusBarProps) {
   const { data: backfillStatus } = useQuery({
     queryKey: ['backfill-status'],
     queryFn: () => api.getBackfillStatus(),
-    refetchInterval: (data) => (data?.is_running ? 3000 : 30000), // Poll faster when running
+    refetchInterval: (data: any) => (data?.is_running ? 3000 : 30000), // Poll faster when running
   });
 
   // Mutation to trigger sync
@@ -35,7 +35,6 @@ export function SyncStatusBar({ wsConnected }: SyncStatusBarProps) {
     },
   });
 
-  const activeSync = syncStatuses.find((s) => s.is_running || s.is_idle_active);
   const selectedAccountStatus = syncStatuses.find((s) => s.account_id === selectedAccountId);
   
   // Determine displayed last sync time

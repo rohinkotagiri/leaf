@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { useEmailStore } from '../../stores/useEmailStore';
-import { Trash2, AlertTriangle, Sparkles, X, ShieldCheck, Database, Check } from 'lucide-react';
+import { Trash2, AlertTriangle, X, Database } from 'lucide-react';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -92,8 +92,8 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
                     className="p-3 bg-slate-950 border border-slate-850 rounded-lg flex items-center justify-between"
                   >
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">{acc.display_name}</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">{acc.email_address}</p>
+                      <h4 className="text-xs font-bold text-slate-200">{acc.email_address}</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{acc.provider}</p>
                       <span className="inline-block mt-1.5 px-1.5 py-0.5 rounded text-[8px] font-bold bg-indigo-950 text-indigo-400 border border-indigo-900 capitalize">
                         {acc.provider}
                       </span>

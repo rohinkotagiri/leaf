@@ -3,7 +3,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useEmailStore } from '../../stores/useEmailStore';
 import { api } from '../../services/api';
-import { Email } from '../../types';
+import type { Email } from '../../types';
 import { Paperclip, Star, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
@@ -39,7 +39,7 @@ export function EmailList() {
       selectedCategory,
       selectedPriority,
     ],
-    queryFn: async ({ pageParam = undefined }) => {
+    queryFn: async ({ pageParam = undefined }: { pageParam?: string }) => {
       // Map focus priorities
       let priorityMin: number | undefined = undefined;
       if (selectedPriority === 'urgent') priorityMin = 7.0;
@@ -57,7 +57,7 @@ export function EmailList() {
       return res;
     },
     initialPageParam: undefined,
-    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    getNextPageParam: (lastPage: any) => lastPage.next_cursor ?? undefined,
     enabled: !searchQuery, // Disable if search is active
   });
 
@@ -91,14 +91,7 @@ export function EmailList() {
     }
   }, [virtualItems, emails.length, hasNextPage, isFetchingNextPage, fetchNextPage, searchQuery]);
 
-  // Bulk Actions mutations
-  const updateFlagsMutation = useMutation({
-    mutationFn: ({ ids, updates }: { ids: string[]; updates: any }) =>
-      Promise.all(ids.map((id) => api.updateEmail(id, updates))),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['emails'] });
-    },
-  });
+  // Bulk Actions mutations (currently unused - kept for future feature)
 
   const triggerActionMutation = useMutation({
     mutationFn: ({ ids, action }: { ids: string[]; action: 'archive' | 'delete' | 'mark_important' }) =>
@@ -250,7 +243,7 @@ export function EmailList() {
         ref={parentRef}
         className="flex-1 overflow-y-auto divide-y divide-slate-950 scrollbar-thin"
       >
-        {status === 'pending' && !searchQuery ? (
+        {(status === 'pending' || status === 'error') && !searchQuery ? (
           <div className="p-8 text-center text-xs text-slate-500 font-medium">
             Loading conversations...
           </div>

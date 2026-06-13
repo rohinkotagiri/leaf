@@ -1,29 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEmailStore } from '../../stores/useEmailStore';
 import { api } from '../../services/api';
-import { Email, ProviderType } from '../../types';
 import { 
   Archive, 
   Trash2, 
   Star, 
-  AlertCircle, 
   Sparkles, 
   ThumbsUp, 
   ThumbsDown, 
-  CheckSquare, 
   Square,
   ChevronDown,
   ChevronUp,
   MailOpen,
   Mail,
-  User,
-  Paperclip
+  Paperclip,
+  RefreshCw
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 export function EmailPane() {
-  const { selectedEmailId, setSelectedEmailId, selectedFolder } = useEmailStore();
+  const { selectedEmailId, setSelectedEmailId } = useEmailStore();
   const queryClient = useQueryClient();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean | null>(null);
   const [correctedCategory, setCorrectedCategory] = useState<string>('');
@@ -53,7 +50,7 @@ export function EmailPane() {
         queryClient.invalidateQueries({ queryKey: ['email', email.id] });
       });
     }
-  }, [email, queryClient]);
+  }, [email?.id, email?.is_read, queryClient]);
 
   // Set corrected category state when email analysis category is available
   useEffect(() => {
@@ -209,8 +206,6 @@ export function EmailPane() {
     );
   };
 
-  const formattedDate = email.date ? format(parseISO(email.date), 'PPPP p') : '';
-
   return (
     <div className="flex-1 bg-slate-950 flex flex-col h-full overflow-hidden font-sans">
       {/* Top Toolbar Action buttons */}
@@ -269,9 +264,9 @@ export function EmailPane() {
 
           {/* Conversation list */}
           <div className="space-y-4">
-            {threadEmails.map((te, index) => {
+            {(threadEmails || []).map((te, index) => {
               const isLatest = te.id === email.id;
-              const isCollapsed = collapsedThreadIds[te.id] ?? (!isLatest && index < threadEmails.length - 1);
+              const isCollapsed = collapsedThreadIds[te.id] ?? (!isLatest && index < (threadEmails?.length || 0) - 1);
 
               const toggleCollapse = () => {
                 setCollapsedThreadIds((prev) => ({

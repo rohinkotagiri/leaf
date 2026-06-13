@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEmailStore } from '../../stores/useEmailStore';
 import { api } from '../../services/api';
 import { Search, Sparkles, Clock, X, SearchCode, Command, ArrowRight } from 'lucide-react';
@@ -12,7 +12,6 @@ export function SearchBar() {
     isCommandPaletteOpen,
     searchHistory,
     parsedQuery,
-    setSearchQuery,
     setSearchResults,
     setParsedQuery,
     addSearchHistory,
@@ -24,7 +23,6 @@ export function SearchBar() {
   const [inputVal, setInputVal] = useState(searchQuery);
   const [debouncedVal, setDebouncedVal] = useState(searchQuery);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounce input value
